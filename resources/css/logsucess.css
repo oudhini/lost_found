@@ -1,0 +1,68 @@
+/* Style du message de succès pour la connexion */
+.alert-success-login {
+    position: fixed;
+    top: 20px; /* Décalé un peu du haut */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #28a745; /* Vert vif */
+    color: #ffffff; /* Texte en blanc */
+    padding: 15px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1050; /* Toujours au-dessus des autres éléments */
+    text-align: center;
+    font-size: 16px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: slideIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 4.5s;
+    max-width: 90%; /* Pour les petits écrans */
+}
+
+/* Bouton de fermeture */
+.alert-success-login .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #ffffff;
+    cursor: pointer;
+}
+.alert-success-lostdocstore {
+    position: fixed;
+    top: 20px; /* Décalé un peu du haut */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #28a745; /* Vert vif */
+    color: #ffffff; /* Texte en blanc */
+    padding: 15px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1050; /* Toujours au-dessus des autres éléments */
+    text-align: center;
+    font-size: 16px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: slideIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 4.5s;
+    max-width: 90%; /* Pour les petits écrans */
+}
+.alert-success-lostdocstore .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #ffffff;
+    cursor: pointer;
+}
+/* Animation d'apparition - effet de glissement */
+@keyframes slideIn {
+    from { transform: translateX(-50%) translateY(-30px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* Animation de disparition */
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

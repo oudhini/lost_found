@@ -1,0 +1,43 @@
+/* Style du conteneur du message */
+.alert-success-centered {
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #d4edda; /* Vert clair */
+    border: 1px solid #c3e6cb; /* Bordure verte */
+    color: #155724; /* Texte vert foncé */
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1050; /* Assure que le message est au-dessus de tout */
+    text-align: center;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    animation: fadeIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 4.5s;
+    max-width: 90%; /* Pour les petits écrans */
+}
+
+/* Bouton de fermeture */
+.alert-success-centered .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #155724;
+    cursor: pointer;
+}
+
+/* Animation d'apparition */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Animation de disparition */
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

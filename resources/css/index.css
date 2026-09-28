@@ -1,0 +1,38 @@
+.body-index {
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                url('https://source.unsplash.com/1600x900/?documents,office') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+    font-family: Arial, sans-serif;
+    height: 90vh;
+    width: 100vw;
+    display: flex;
+    justify-content:center;
+    align-items:center;
+    margin: 0;
+  }
+  .welcome-container {
+    text-align: center;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+  .welcome-container h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+  }
+  .welcome-container p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+  }
+  .btn-start {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+  }
+  .breadcrumb-container {
+    border: 1px solid #dee2e6; /* Couleur de la bordure */
+    border-radius: 0.25rem; /* Arrondir les coins */
+    padding: 15px; /* Espacement interne */
+    background-color: #f8f9fa; /* Couleur de fond */
+}
