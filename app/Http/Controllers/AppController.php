@@ -95,7 +95,6 @@ class AppController extends Controller
                 if(move_uploaded_file($tmp_name,$destination)){
                     if(empty($photos)){
                         $photos=$name;
-                        // dd($photos);
                     }else{
                         $photos=$photos.",".$name;
                         // dd($photos);
@@ -106,7 +105,6 @@ class AppController extends Controller
                     
                         }
         }
-        // dd($photos);
         if($request->numero_du_document==NULL){
             $numero="aucun numéro";
         }else{
