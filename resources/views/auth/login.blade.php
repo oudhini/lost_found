@@ -8,6 +8,9 @@
         <button class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
     </div>
 @endif
+@if (session('status'))
+    <div class="container mt-3"><div class="alert alert-success" role="status">{{ session('status') }}</div></div>
+@endif
 <div class="container mt-5 pb-3">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -41,6 +44,9 @@
                                 <a href="#">Mot de passe oublié ?</a>
                             </div>
                         </div> --}}
+                        <div class="text-end mb-3">
+                            <a href="{{ route('password.request') }}">Mot de passe oublié ?</a>
+                        </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary text-center ml-3 mr-3">Se connecter</button>
                         </div>

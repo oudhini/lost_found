@@ -141,12 +141,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo e(Request::is('user/profile') ? 'active' : ''); ?>" href="<?php echo e(route('user.profile')); ?>">
+                    <a class="nav-link <?php echo e(request()->routeIs('notifications.*') ? 'active' : ''); ?>" href="<?php echo e(route('notifications.index')); ?>">
                         <i class="bi bi-bell"></i> Notifications
+                        <?php ($unread = auth()->user()->unreadNotifications()->count()); ?>
+                        <?php if($unread > 0): ?><span class="badge bg-danger ms-1"><?php echo e($unread); ?></span><?php endif; ?>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo e(Request::is('user/profile') ? 'active' : ''); ?>" href="<?php echo e(route('user.profile')); ?>">
+                    <a class="nav-link <?php echo e(request()->routeIs('user.profile') ? 'active' : ''); ?>" href="<?php echo e(route('user.profile')); ?>">
                         <i class="bi bi-person"></i> Mon Profil
                     </a>
                 </li>

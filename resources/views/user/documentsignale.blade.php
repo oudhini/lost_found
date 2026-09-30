@@ -35,13 +35,11 @@
         @foreach($documents as $document)
             <div class="col-md-4">
                 <div class="card">
-                    @if($document->photos) <!-- Vérifiez si l'image existe -->
-                        <img src="{{ asset('assets/images/documentspictures/' . $document->photos) }}" class="card-img-top" alt="{{ $document->name }}">
+                    @if($document->photoUrls())
+                        <img src="{{ $document->photoUrls()[0] }}" class="card-img-top" alt="Photo du document">
                     @else
-                <?php 
-                ?>
                         <div class="card-img-top d-flex justify-content-center align-items-center" style="height: 150px; background-color: #e9ecef;">
-                            <i class="bi bi-file-earmark-text" style="font-size: 50px;"></i> <!-- Icône Bootstrap -->
+                            <i class="bi bi-file-earmark-text" style="font-size: 50px;"></i>
                         </div>
                     @endif
                     <div class="card-body">
@@ -53,13 +51,22 @@
                             <strong class="card-text"><small class="text-muted">Perdu le: {{ $document->date_de_perte ? \Carbon\Carbon::parse($document->date_de_perte)->format('d M Y') : 'Date non spécifiée' }}</small></strong> <br>
                             </div>
                         
-                        <a href="{{ route('welcome', $document->id) }}" class="btn btn-primary mx-3">Voir Détails</a>
+                        <a href="{{ route('documents.show', $document->id) }}" class="btn btn-primary mx-3">Voir Détails</a>
                         <form action="{{ route('supp_doc', $document->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete(event)" >
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger">Supprimer</button>
                         </form>
-                        {{-- <a href="{{ route('welcome', $document->id) }}" class="btn btn-warning">Signaler Récupération</a> --}}
+                        @if (($matchesByDocument[$document->id] ?? collect())->isNotEmpty())
+                            <div class="alert alert-success mt-3 mb-0 py-2 px-3">
+                                <i class="bi bi-lightbulb"></i> <strong>Ça pourrait être le vôtre :</strong>
+                                <ul class="mb-0 ps-3">
+                                    @foreach ($matchesByDocument[$document->id] as $match)
+                                        <li><a href="{{ route('documents.show', $match->id) }}">{{ $match->nom_present_sur_le_document }}</a> — {{ $match->depot?->name ?? 'dépôt non précisé' }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

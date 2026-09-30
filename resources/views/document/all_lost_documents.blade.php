@@ -10,28 +10,33 @@
              aucun document perdu n'est enregistré sur la plateforme pour le moment.
         </div>
     @else
-    <form method="GET" action="{{ route('documents.index') }}" class="mb-4">
-        <div class="form-group">
-            <label for="type">Choisissez un type de document :</label>
-            <select name="type" id="type" class="form-control" onchange="this.form.submit()">
+    <form method="GET" action="{{ route('documents.index') }}" class="row g-2 mb-4">
+        <div class="col-md-8">
+            <label for="q" class="form-label">Rechercher par nom, numéro ou lieu</label>
+            <input type="search" name="q" id="q" value="{{ $q }}" class="form-control" placeholder="Ex. Alice, CNI 123..., Marché Mokolo">
+        </div>
+        <div class="col-md-4">
+            <label for="type" class="form-label">Type de document</label>
+            <select name="type" id="type" class="form-select">
                 <option value="">Tous les types</option>
                 @foreach($types as $type)
                     <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>{{ str_replace('_', ' ', $type) }}</option>
                 @endforeach
             </select>
         </div>
+        <div class="col-12">
+            <button class="btn btn-primary"><i class="bi bi-search"></i> Rechercher</button>
+        </div>
     </form>
     <div class="row">
         @foreach($documents as $document)
             <div class="col-md-4">
                 <div class="card">
-                    @if($document->photos) <!-- Vérifiez si l'image existe -->
-                        <img src="{{ asset('assets/images/documentspictures/' . $document->photos) }}" class="card-img-top" alt="{{ $document->name }}">
+                    @if($document->photoUrls())
+                        <img src="{{ $document->photoUrls()[0] }}" class="card-img-top" alt="Photo du document">
                     @else
-                <?php 
-                ?>
                         <div class="card-img-top d-flex justify-content-center align-items-center" style="height: 150px; background-color: #e9ecef;">
-                            <i class="bi bi-file-earmark-text" style="font-size: 50px;"></i> <!-- Icône Bootstrap -->
+                            <i class="bi bi-file-earmark-text" style="font-size: 50px;"></i>
                         </div>
                     @endif
                     <div class="card-body">
@@ -43,13 +48,7 @@
                             <strong class="card-text"><small class="text-muted">Perdu le: {{ $document->date_de_perte ? \Carbon\Carbon::parse($document->date_de_perte)->format('d M Y') : 'Date non spécifiée' }}</small></strong> <br>
                             </div>
                         
-                        <a href="{{ route('welcome', $document->id) }}" class="btn btn-primary">Voir Détails</a>
-                        {{-- <form action="{{ route('welcome', $document->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger">Supprimer</button>
-                        </form> --}}
-                        {{-- <a href="{{ route('welcome', $document->id) }}" class="btn btn-warning">Signaler Récupération</a> --}}
+                        <a href="{{ route('documents.show', $document->id) }}" class="btn btn-primary">Voir Détails</a>
                     </div>
                 </div>
             </div>

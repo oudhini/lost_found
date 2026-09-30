@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{-- <link rel="stylesheet" href="{{asset('assets/lib/fontawesome-free/css/all.min.css')}}"> --}}
     <title>{{ config('app.name') }}</title>
     @vite(['resources/css/app.css'])
     <style>
@@ -102,7 +103,7 @@
             </div>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('/dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                         <i class="bi bi-house-door"></i> Tableau de bord
                     </a>
                 </li>
@@ -147,12 +148,24 @@
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
-                        <i class="bi bi-bell"></i> Notifications
+                    <a class="nav-link {{ request()->routeIs('admin.documents.*') ? 'active' : '' }}" href="{{ route('admin.documents.index') }}">
+                        <i class="bi bi-file-earmark-text"></i> Documents
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
+                    <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
+                        <i class="bi bi-people"></i> Utilisateurs
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
+                        <i class="bi bi-bell"></i> Notifications
+                        @php($unread = auth()->user()->unreadNotifications()->count())
+                        @if ($unread > 0)<span class="badge bg-danger ms-1">{{ $unread }}</span>@endif
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('user.profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
                         <i class="bi bi-person"></i> Mon Profil
                     </a>
                 </li>
@@ -208,6 +221,6 @@
             sidebar.classList.toggle('open');
         }
     </script>
-</??>
+</body>
 
 </html>

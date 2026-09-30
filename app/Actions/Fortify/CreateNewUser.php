@@ -32,12 +32,13 @@
                     'max:255',
                     Rule::unique(User::class),
                 ],
-                'phone' => ['required','string', 'max:15'],
+                'phone' => ['required', 'string', 'max:15', Rule::unique(User::class)],
                 'password' => $this->passwordRules()
             ],[
                 'name.required' => 'Le nom est obligatoire.',
                  'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
                 'phone.required' => 'Le numéro de téléphone est obligatoire.',
+                'phone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
             ])->validate();
                 
             // if (Validator::fails()) {

@@ -141,12 +141,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
+                    <a class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
                         <i class="bi bi-bell"></i> Notifications
+                        @php($unread = auth()->user()->unreadNotifications()->count())
+                        @if ($unread > 0)<span class="badge bg-danger ms-1">{{ $unread }}</span>@endif
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
+                    <a class="nav-link {{ request()->routeIs('user.profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
                         <i class="bi bi-person"></i> Mon Profil
                     </a>
                 </li>

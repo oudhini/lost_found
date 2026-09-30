@@ -2,108 +2,167 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 use App\Models\Depot;
-use App\Events\DepotAssigned;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
+/**
+ * Supervisor-only CRUD for depot managers (role "gerant").
+ * Every lookup is scoped to managers so this controller can never
+ * be used to edit or delete a supervisor or a regular user.
+ */
 class GerantController extends Controller
 {
- // Afficher le formulaire de création d'un gérant
- public function create()
- {
-    $pageTitle = 'Nouveau Gerant';
-    $breadcrumb = ['Gerants','Nouveau Gerant'];
-    $inactiveDepots=Depot::where('statut','inactif')->get();
-     return view('gerant.create',compact('pageTitle','breadcrumb','inactiveDepots')); // Créez une vue pour le formulaire
- }
-
- // Enregistrer un nouveau gérant
- public function store(Request $request)
- { 
-     $request->validate([
-         'name' => 'required|string|max:255',
-         'email' => 'required|string|email|max:255|unique:users,email',
-         'phone' => 'nullable|string|max:255',
-         'password' => 'required|string|min:8|confirmed',
-     ]);
-
-     $manager = User::create([
-         'name' => $request->name,
-         'email' => $request->email,
-         'phone' => $request->phone,
-         'password' => Hash::make($request->password),
-         'role' => 'gerant', // Définir le rôle comme gérant
-     ]);
-     // Attribution du dépôt inactif
-    $depot = Depot::find($request->depot_id);
-    if ($depot) {
-        $depot->gerant_id=$manager->id;
-        $depot->save();
-
-        // Déclencher l'événement
-        event(new DepotAssigned($manager, $depot));
+    private function findManager(int $id): User
+    {
+        return User::where('role', User::ROLE_MANAGER)->findOrFail($id);
     }
 
-     return redirect()->route('gerant.index')->with('success', 'Gérant créé avec succès et dépot assigné.');
- }
+    public function index(Request $request): View
+    {
+        $search = trim((string) $request->query('q', ''));
 
- // Afficher la liste des gérants
- public function index()
- {
-    $pageTitle = 'Liste Gerants';
-    $breadcrumb = ['Gerants','Liste Gerants'];
-     $managers = User::where('role', 'gerant')->get();
-     return view('gerant.index', compact('managers','pageTitle','breadcrumb'));
- }
+        $managers = User::where('role', User::ROLE_MANAGER)
+            ->with('depot:id,name,gerant_id')
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $like = '%'.$search.'%';
+                $query->where(function (Builder $q) use ($like): void {
+                    $q->where('name', 'like', $like)
+                        ->orWhere('email', 'like', $like)
+                        ->orWhere('phone', 'like', $like);
+                });
+            })
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
 
- // Afficher les informations d'un gérant
- public function show($id)
- {  $pageTitle = 'Détails';
-    $breadcrumb = ['Gerants','Liste Gerants','Détails'];
-    $manager = User::findOrFail($id);
-     return view('gerant.show', compact('manager','pageTitle','breadcrumb'));
- }
+        $pageTitle = 'Liste Gerants';
+        $breadcrumb = ['Gerants', 'Liste Gerants'];
 
- // Afficher le formulaire d'édition d'un gérant
- public function edit($id)
- {
-     $manager = User::findOrFail($id);
-     $pageTitle = 'Détails';
-    $breadcrumb = ['Gerants','Liste Gerants','Modifier'];
-     return view('gerant.edit', compact('manager','pageTitle','breadcrumb'));
- }
+        return view('gerant.index', compact('managers', 'pageTitle', 'breadcrumb', 'search'));
+    }
 
- // Mettre à jour les informations d'un gérant
- public function update(Request $request, $id)
- {
-     $manager = User::findOrFail($id);
+    public function create(): View
+    {
+        $pageTitle = 'Nouveau Gerant';
+        $breadcrumb = ['Gerants', 'Nouveau Gerant'];
+        $inactiveDepots = Depot::where('statut', Depot::STATUS_INACTIVE)->orderBy('name')->get();
 
-     $request->validate([
-         'name' => 'required|string|max:255',
-         'email' => 'required|string|email|max:255|unique:users,email,' . $manager->id,
-         'phone' => 'nullable|string|max:255',
-         'password' => 'nullable|string|min:8|confirmed',
-     ]);
+        return view('gerant.create', compact('pageTitle', 'breadcrumb', 'inactiveDepots'));
+    }
 
-     $manager->update([
-         'name' => $request->name,
-         'email' => $request->email,
-         'phone' => $request->phone,
-         'password' => $request->password ? Hash::make($request->password) : $manager->password,
-     ]);
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:15', 'unique:users,phone'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'depot_id' => ['nullable', Rule::exists('depots', 'id')->where('statut', Depot::STATUS_INACTIVE)],
+        ]);
 
-     return redirect()->route('gerant.index')->with('success', 'Gérant mis à jour avec succès.');
- }
+        DB::transaction(function () use ($data): void {
+            $manager = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'],
+                'password' => $data['password'], // hashed by the model cast
+                'role' => User::ROLE_MANAGER,
+            ]);
 
- // Supprimer un gérant
- public function destroy($id)
- {
-     $manager = User::findOrFail($id);
-     $manager->delete();
+            if (! empty($data['depot_id'])) {
+                Depot::findOrFail($data['depot_id'])->assignManager($manager);
+            }
+        });
 
-     return redirect()->route('gerant.index')->with('success', 'Gérant supprimé avec succès.');
- }
+        return redirect()->route('gerant.index')->with('success', 'Gérant créé avec succès.');
+    }
+
+    public function show(int $id): View
+    {
+        $manager = $this->findManager($id)->load('depot');
+        $pageTitle = 'Détails';
+        $breadcrumb = ['Gerants', 'Liste Gerants', 'Détails'];
+
+        return view('gerant.show', compact('manager', 'pageTitle', 'breadcrumb'));
+    }
+
+    public function edit(int $id): View
+    {
+        $manager = $this->findManager($id)->load('depot');
+        $pageTitle = 'Modifier';
+        $breadcrumb = ['Gerants', 'Liste Gerants', 'Modifier'];
+
+        // Free depots, plus the one this manager already runs.
+        $availableDepots = Depot::where('statut', Depot::STATUS_INACTIVE)
+            ->orWhere('gerant_id', $manager->id)
+            ->orderBy('name')
+            ->get();
+
+        return view('gerant.edit', compact('manager', 'pageTitle', 'breadcrumb', 'availableDepots'));
+    }
+
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        $manager = $this->findManager($id);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($manager->id)],
+            'phone' => ['required', 'string', 'max:15', Rule::unique('users', 'phone')->ignore($manager->id)],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'depot_id' => ['nullable', Rule::exists('depots', 'id')->where(function ($query) use ($manager): void {
+                // Grouped on purpose: without the nested closure the OR escapes the "id = ?" condition.
+                $query->where(function ($group) use ($manager): void {
+                    $group->where('statut', Depot::STATUS_INACTIVE)->orWhere('gerant_id', $manager->id);
+                });
+            })],
+        ]);
+
+        DB::transaction(function () use ($manager, $data): void {
+            $manager->fill([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'],
+            ]);
+
+            if (! empty($data['password'])) {
+                $manager->password = $data['password']; // hashed by the model cast
+            }
+
+            $manager->save();
+
+            $newDepotId = $data['depot_id'] ?? null;
+            $currentDepot = $manager->depot;
+
+            if ($currentDepot !== null && (int) $newDepotId !== $currentDepot->id) {
+                $currentDepot->releaseManager();
+            }
+
+            if ($newDepotId !== null && ($currentDepot === null || (int) $newDepotId !== $currentDepot->id)) {
+                Depot::findOrFail($newDepotId)->assignManager($manager);
+            }
+        });
+
+        return redirect()->route('gerant.index')->with('success', 'Gérant mis à jour avec succès.');
+    }
+
+    public function destroy(int $id): RedirectResponse
+    {
+        $manager = $this->findManager($id);
+
+        DB::transaction(function () use ($manager): void {
+            // depots.gerant_id has a foreign key on users: free the depot first, and put it back to inactive.
+            Depot::where('gerant_id', $manager->id)->get()->each->releaseManager();
+
+            $manager->delete();
+        });
+
+        return redirect()->route('gerant.index')->with('success', 'Gérant supprimé avec succès. Son dépôt est de nouveau inactif.');
+    }
 }

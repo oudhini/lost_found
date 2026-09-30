@@ -1,4 +1,3 @@
-
 <?php $__env->startSection('title', 'Espace administrateur'); ?>
 <?php $__env->startSection('content'); ?>
 <?php if(session('login_success')): ?>
@@ -135,6 +134,22 @@
             </div>
         </div>
        
+    </div>
+    <div class="card mb-5">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clock-history"></i> Derniers signalements (<?php echo e($totalUtilisateurs); ?> utilisateurs inscrits)</span>
+            <a href="<?php echo e(route('admin.documents.index')); ?>" class="btn btn-sm btn-primary">Tout voir</a>
+        </div>
+        <ul class="list-group list-group-flush">
+            <?php $__empty_1 = true; $__currentLoopData = $recentDocuments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $document): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="<?php echo e(route('admin.documents.show', $document)); ?>"><?php echo e($document->typeLabel()); ?> — <?php echo e($document->nom_present_sur_le_document); ?></a>
+                    <span class="badge <?php echo e($document->statusBadgeClass()); ?>"><?php echo e($document->statusLabel()); ?></span>
+                </li>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                <li class="list-group-item text-muted">Aucun document signalé pour le moment.</li>
+            <?php endif; ?>
+        </ul>
     </div>
 <?php else: ?>
     <p>Veuillez vous connecter pour accéder à cette page.</p>

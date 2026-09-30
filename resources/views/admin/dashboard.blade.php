@@ -133,6 +133,22 @@
         </div>
        
     </div>
+    <div class="card mb-5">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clock-history"></i> Derniers signalements ({{ $totalUtilisateurs }} utilisateurs inscrits)</span>
+            <a href="{{ route('admin.documents.index') }}" class="btn btn-sm btn-primary">Tout voir</a>
+        </div>
+        <ul class="list-group list-group-flush">
+            @forelse ($recentDocuments as $document)
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <a href="{{ route('admin.documents.show', $document) }}">{{ $document->typeLabel() }} — {{ $document->nom_present_sur_le_document }}</a>
+                    <span class="badge {{ $document->statusBadgeClass() }}">{{ $document->statusLabel() }}</span>
+                </li>
+            @empty
+                <li class="list-group-item text-muted">Aucun document signalé pour le moment.</li>
+            @endforelse
+        </ul>
+    </div>
 @else
     <p>Veuillez vous connecter pour accéder à cette page.</p>
 @endauth

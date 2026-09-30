@@ -45,6 +45,19 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        <!-- Dépôt géré -->
+                        <div class="mb-3">
+                            <label for="depot_id" class="form-label">Dépôt géré</label>
+                            <select name="depot_id" id="depot_id" class="form-select @error('depot_id') is-invalid @enderror">
+                                <option value="">Aucun (le dépôt actuel repasse inactif)</option>
+                                @foreach($availableDepots as $depot)
+                                    <option value="{{ $depot->id }}" @selected((string) old('depot_id', $manager->depot?->id) === (string) $depot->id)>{{ $depot->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('depot_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                         <!-- Mot de passe (facultatif) -->
                         <div class="mb-3">
                             <label for="password" class="form-label">Mot de passe (laisser vide pour ne pas changer)</label>

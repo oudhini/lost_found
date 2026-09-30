@@ -1,123 +1,129 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Depot;
+use App\Models\User;
+use App\Support\RoleLayout;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class DepotController extends Controller
 {
-     // Afficher la liste des dépôts
-    public function index(Request $request)
+    private const PER_PAGE_OPTIONS = [2, 3, 4, 5, 10];
+
+    private const DEFAULT_PER_PAGE = 3;
+
+    /**
+     * Rules shared by store() and update(). Only these keys ever reach the model,
+     * so a client can never set `gerant_id` or `statut` through the form.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    private function depotRules(): array
     {
-        $user = auth()->user();
-        $pageTitle = 'Liste Point de dépot';
-        $breadcrumb = ['Points de Dépot','Liste Point de dépot'];
-       // $depots=Depot::where('statut','inactif')->orwhere('statut','actif')->paginate(4);
-        // $depots = Depot::all(); // Récupérer tous les dépôts
-        $statuts=Depot::select('statut')->distinct()->pluck('statut');
-        $statut= $request->input('statut', '');
-        $perPage = $request->input('perPage', 3); // 10 est la valeur par défaut
-        if($statut==''){
-            $depots = Depot::paginate($perPage);  
-        }else{
-            $depots = Depot::where('statut', $statut)->paginate($perPage);   
-        }
-        
-        if($user->role=="superviseur"){
-            return view('depot.index', compact('depots','pageTitle','breadcrumb','perPage','statuts','statut'));
-        }elseif ($user->role=="gerant") {
-            return view('gerant.listedepot', compact('depots','pageTitle','breadcrumb','perPage','statuts','statut'));
-        }else{
-            return view('user.listdepot', compact('depots','pageTitle','breadcrumb','perPage','statuts','statut')); 
-        }
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string', 'max:255'],
+            'contact' => ['required', 'string', 'max:255'],
+            'opening_hours' => ['nullable', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+        ];
     }
 
-    // Afficher le formulaire de création d'un nouveau dépôt
-    public function create()
+    public function index(Request $request): View
+    {
+        $filters = $request->validate([
+            'statut' => ['nullable', Rule::in([Depot::STATUS_ACTIVE, Depot::STATUS_INACTIVE])],
+            'perPage' => ['nullable', 'integer', Rule::in(self::PER_PAGE_OPTIONS)],
+        ]);
+
+        $user = $request->user();
+        $statut = $filters['statut'] ?? '';
+        $perPage = (int) ($filters['perPage'] ?? self::DEFAULT_PER_PAGE);
+        $statuts = Depot::query()->select('statut')->distinct()->pluck('statut');
+
+        $depots = Depot::query()
+            ->when($statut !== '', fn ($query) => $query->where('statut', $statut))
+            ->orderBy('name')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $pageTitle = 'Liste Point de dépot';
+        $breadcrumb = ['Points de Dépot', 'Liste Point de dépot'];
+
+        $view = match ($user->role) {
+            User::ROLE_SUPERVISOR => 'depot.index',
+            User::ROLE_MANAGER => 'gerant.listedepot',
+            default => 'user.listdepot',
+        };
+
+        return view($view, compact('depots', 'pageTitle', 'breadcrumb', 'perPage', 'statuts', 'statut'));
+    }
+
+    public function create(): View
     {
         $pageTitle = 'Nouveau Point de dépot';
-        $breadcrumb = ['Points de dépot','Nouveau Point'];
-        return view('depot.create',compact('pageTitle','breadcrumb')); // Vue pour créer un nouveau dépôt
+        $breadcrumb = ['Points de dépot', 'Nouveau Point'];
+
+        return view('depot.create', compact('pageTitle', 'breadcrumb'));
     }
 
-    // Enregistrer un nouveau dépôt
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        // dd($request->name);
-      // Validation des données
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'address' => 'required|string|max:255',
-        'opening_hours' => 'nullable|string|max:255',
-        'latitude' => 'nullable|numeric',
-        'longitude' => 'nullable|numeric',
-        'contact' => 'nullable|string|max:255',
-    ]);
+        $data = $request->validate($this->depotRules());
 
-    // Création du dépôt avec le statut inactif
-    Depot::create([
-        'name' => $request->name,
-        'address' => $request->address,
-        'opening_hours' => $request->opening_hours,
-        'latitude' => $request->latitude,
-        'longitude' => $request->longitude,
-        'contact' => $request->contact,
-        'gerant_id' => null, // Pas de gérant à la création
-        'statut' => 'inactif', // Statut par défaut
-    ]);
+        // A new depot has no manager yet, hence it starts inactive.
+        Depot::create($data + ['gerant_id' => null, 'statut' => Depot::STATUS_INACTIVE]);
 
-    // Redirection avec message de succès
-    return redirect()->route('depot.index')->with('success', 'Dépôt créé avec succès.');
+        return redirect()->route('depot.index')->with('success', 'Dépôt créé avec succès.');
     }
 
-    // Afficher les détails d'un dépôt spécifique
-    public function show($id)
+    public function show(Request $request, int $id): View
     {
-        $depot = Depot::findOrFail($id);
+        $depot = Depot::with('gerant:id,name,phone')->findOrFail($id);
         $pageTitle = 'Detail dépot';
         $breadcrumb = ['Detail dépot'];
-        return view('depot.show', compact('depot','pageTitle','breadcrumb')); // Vue pour afficher les détails d'un dépôt
+        $layout = RoleLayout::for($request->user());
+
+        return view('depot.show', compact('depot', 'pageTitle', 'breadcrumb', 'layout'));
     }
 
-    // Afficher le formulaire d'édition d'un dépôt
-    public function edit($id)
+    public function edit(int $id): View
     {
         $depot = Depot::findOrFail($id);
         $pageTitle = 'Modification dépot';
-        $breadcrumb = ['Liste Depot','Modification Depot'];
-        return view('depot.edit', compact('depot','pageTitle','breadcrumb')); // Vue pour éditer un dépôt
+        $breadcrumb = ['Liste Depot', 'Modification Depot'];
+
+        return view('depot.edit', compact('depot', 'pageTitle', 'breadcrumb'));
     }
 
-    // Mettre à jour un dépôt existant
-    public function update(Request $request, $id)
-    {
-
-         // Valider les données du formulaire
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'address' => 'required|string|max:255',
-        'contact' => 'required|string|max:255',
-        'opening_hours' => 'nullable|string',
-        'latitude' => 'nullable|numeric',
-        'longitude' => 'nullable|numeric',
-    ]);
-
-    // Récupérer le dépôt par son ID
-    $depot = Depot::findOrFail($id);
-
-    // Mettre à jour les données
-    $depot->update($request->all());
-
-    // Rediriger vers la page de détails avec un message de succès
-    return redirect()->route('depot.show', $depot->id)->with('success', 'Dépôt mis à jour avec succès.');
-    }
-
-    // Supprimer un dépôt
-    public function destroy($id)
+    public function update(Request $request, int $id): RedirectResponse
     {
         $depot = Depot::findOrFail($id);
-        $depot->delete(); // Supprimer le dépôt
+
+        $depot->update($request->validate($this->depotRules()));
+
+        return redirect()->route('depot.show', $depot->id)->with('success', 'Dépôt mis à jour avec succès.');
+    }
+
+    public function destroy(int $id): RedirectResponse
+    {
+        $depot = Depot::withCount('documents')->findOrFail($id);
+
+        // documents.depot_id is ON DELETE CASCADE: deleting a depot silently wiped its documents.
+        if ($depot->documents_count > 0) {
+            return redirect()->route('depot.index')->with(
+                'error',
+                "Ce dépôt contient {$depot->documents_count} document(s) : transférez-les avant de le supprimer."
+            );
+        }
+
+        $depot->delete();
+
         return redirect()->route('depot.index')->with('success', 'Dépôt supprimé avec succès.');
     }
 }

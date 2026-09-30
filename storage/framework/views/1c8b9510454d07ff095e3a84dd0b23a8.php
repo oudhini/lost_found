@@ -1,4 +1,3 @@
-
 <?php $__env->startSection('title', 'Espace Utilisateur'); ?>
 <?php $__env->startSection('content'); ?>
 
@@ -10,28 +9,33 @@
              aucun document perdu n'est enregistré sur la plateforme pour le moment.
         </div>
     <?php else: ?>
-    <form method="GET" action="<?php echo e(route('documents.index')); ?>" class="mb-4">
-        <div class="form-group">
-            <label for="type">Choisissez un type de document :</label>
-            <select name="type" id="type" class="form-control" onchange="this.form.submit()">
+    <form method="GET" action="<?php echo e(route('documents.index')); ?>" class="row g-2 mb-4">
+        <div class="col-md-8">
+            <label for="q" class="form-label">Rechercher par nom, numéro ou lieu</label>
+            <input type="search" name="q" id="q" value="<?php echo e($q); ?>" class="form-control" placeholder="Ex. Alice, CNI 123..., Marché Mokolo">
+        </div>
+        <div class="col-md-4">
+            <label for="type" class="form-label">Type de document</label>
+            <select name="type" id="type" class="form-select">
                 <option value="">Tous les types</option>
                 <?php $__currentLoopData = $types; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $type): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <option value="<?php echo e($type); ?>" <?php echo e(request('type') == $type ? 'selected' : ''); ?>><?php echo e(str_replace('_', ' ', $type)); ?></option>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
         </div>
+        <div class="col-12">
+            <button class="btn btn-primary"><i class="bi bi-search"></i> Rechercher</button>
+        </div>
     </form>
     <div class="row">
         <?php $__currentLoopData = $documents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $document): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <div class="col-md-4">
                 <div class="card">
-                    <?php if($document->photos): ?> <!-- Vérifiez si l'image existe -->
-                        <img src="<?php echo e(asset('assets/images/documentspictures/' . $document->photos)); ?>" class="card-img-top" alt="<?php echo e($document->name); ?>">
+                    <?php if($document->photoUrls()): ?>
+                        <img src="<?php echo e($document->photoUrls()[0]); ?>" class="card-img-top" alt="Photo du document">
                     <?php else: ?>
-                <?php 
-                ?>
                         <div class="card-img-top d-flex justify-content-center align-items-center" style="height: 150px; background-color: #e9ecef;">
-                            <i class="bi bi-file-earmark-text" style="font-size: 50px;"></i> <!-- Icône Bootstrap -->
+                            <i class="bi bi-file-earmark-text" style="font-size: 50px;"></i>
                         </div>
                     <?php endif; ?>
                     <div class="card-body">
@@ -43,9 +47,7 @@
                             <strong class="card-text"><small class="text-muted">Perdu le: <?php echo e($document->date_de_perte ? \Carbon\Carbon::parse($document->date_de_perte)->format('d M Y') : 'Date non spécifiée'); ?></small></strong> <br>
                             </div>
                         
-                        <a href="<?php echo e(route('welcome', $document->id)); ?>" class="btn btn-primary">Voir Détails</a>
-                        
-                        
+                        <a href="<?php echo e(route('documents.show', $document->id)); ?>" class="btn btn-primary">Voir Détails</a>
                     </div>
                 </div>
             </div>

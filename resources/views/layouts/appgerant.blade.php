@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{-- <link rel="stylesheet" href="{{asset('assets/lib/fontawesome-free/css/all.min.css')}}"> --}}
     <title>{{ config('app.name') }}</title>
     @vite(['resources/css/app.css'])
     <style>
@@ -101,48 +102,48 @@
                  <h4 class="text-white">{{ config('app.name') }}</h4>
             </div>
             <ul class="nav flex-column">
+                @php($managerDepot = auth()->user()->depot)
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('/dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                         <i class="bi bi-house-door"></i> Tableau de bord
                     </a>
                 </li>
+                @if ($managerDepot)
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/documents') ? 'active' : '' }}" href="#"
-                       data-bs-toggle="collapse" data-bs-target="#documentsSubmenu" aria-expanded="false" aria-controls="documentsSubmenu">
-                        <i class="bi bi-folder"></i> Documents
-                    </a>
-                    <div class="collapse" id="documentsSubmenu">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link {{ Request::is('/depot/create') ? 'active' : '' }}" href="{{ route('depot.create') }}">
-                                    <i class="bi-file-earmark-plus"></i> Receptionner
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link fs-7 {{ Request::is('/depot/index') ? 'active' : '' }}" href="{{ route('depot.index') }}">
-                                    <i class="bi-arrow-return-left"></i> Rendre
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/documents') ? 'active' : '' }}" href="{{ route('depot.index') }}">
-                        <i class="bi bi-house"></i> Points de Dépots
+                    <a class="nav-link {{ request()->routeIs('manager.receive', 'manager.found.*') ? 'active' : '' }}" href="{{ route('manager.receive') }}">
+                        <i class="bi bi-file-earmark-plus"></i> Réceptionner
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/history') ? 'active' : '' }}" href="{{ route('user.history') }}">
-                        <i class="bi bi-clock"></i> Historique 
+                    <a class="nav-link {{ request()->routeIs('manager.documents.*') ? 'active' : '' }}" href="{{ route('manager.documents.index') }}">
+                        <i class="bi bi-folder"></i> Documents / Rendre
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
+                    <a class="nav-link {{ request()->routeIs('depot.show') ? 'active' : '' }}" href="{{ route('depot.show', $managerDepot->id) }}">
+                        <i class="bi bi-house"></i> Mon dépôt
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('manager.history') ? 'active' : '' }}" href="{{ route('manager.history') }}">
+                        <i class="bi bi-clock"></i> Historique
+                    </a>
+                </li>
+                @endif
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('depot.index') ? 'active' : '' }}" href="{{ route('depot.index') }}">
+                        <i class="bi bi-geo-alt"></i> Tous les dépôts
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
                         <i class="bi bi-bell"></i> Notifications
+                        @php($unread = auth()->user()->unreadNotifications()->count())
+                        @if ($unread > 0)<span class="badge bg-danger ms-1">{{ $unread }}</span>@endif
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Request::is('user/profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
+                    <a class="nav-link {{ request()->routeIs('user.profile') ? 'active' : '' }}" href="{{ route('user.profile') }}">
                         <i class="bi bi-person"></i> Mon Profil
                     </a>
                 </li>
@@ -198,6 +199,6 @@
             sidebar.classList.toggle('open');
         }
     </script>
-</??>
+</body>
 
 </html>
